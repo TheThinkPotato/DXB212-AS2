@@ -13,6 +13,10 @@ Reed Switches
   * Gimble Left pin 18
   * Gimble Right pin 19
 
+Twist Pot Analog Input
+=================================
+  * Analog Twist Pot pin A0 (D14)
+
 FAN PWM
 =================================
  * Fan PWM output on pin 6
@@ -49,6 +53,7 @@ void updateInputs();
 void ControlFan();
 
 // Inputs
+const uint8_t POT = A0;
 const uint8_t IR_PIN = 8;
 const uint8_t REED_FORWARD = 16;
 const uint8_t REED_BACKWARD = 17;
@@ -65,6 +70,7 @@ const uint8_t DIVIDER_AMOUNT = 8;  // Amount of times to skip before ramping dow
 uint8_t waveCnt = 0;
 uint8_t fanVolume = 0;
 uint16_t divider = 0;  // For Fan ramp down
+uint8_t potValue = 0;
 
 
 // initialize the library by associating any needed LCD interface pin
@@ -97,6 +103,7 @@ void setup() {
   // Inputs
   // IR Detection Pin
   pinMode(IR_PIN, INPUT);
+  
   // Reed Switches
   pinMode(REED_FORWARD, INPUT_PULLUP);
   pinMode(REED_BACKWARD, INPUT_PULLUP);
@@ -123,11 +130,13 @@ void loop() {
 //=================================================================
 // Debug LCD
 void debugLCD() {
+  // Display + for rising edge for reed switch
   if (reedForward.isRisingEdge()) {
 
     lcd.setCursor(9, 1);
     lcd.print("+");    
 
+// Display - for falling edge for reed switch
   } else if (reedForward.isFallingEdge()) {
 
     lcd.setCursor(9, 1);
@@ -135,23 +144,31 @@ void debugLCD() {
   }
 
   //Rising Edge  __|^^
+  // Display rising edge as R
   if (motionIR.isRisingEdge()) {
-
     lcd.setCursor(15, 0);
     lcd.print("R");
 
+  // Display falling edge as F
   } else if (motionIR.isFallingEdge()) {
     lcd.setCursor(15, 0);
     lcd.print("F");
   }
 
+  // Display amount of waves performed
   lcd.setCursor(6, 1);
   lcd.print(waveCnt);
   lcd.print("  ");
 
+  // Display Fan Speed of PWM
   lcd.setCursor(12, 1);
   lcd.print(fanVolume);
   lcd.print("  ");
+
+  // Display POT
+  lcd.setCursor(10, 0);
+  lcd.print(potValue);
+  lcd.print(" ");
 }
 
 
@@ -159,6 +176,9 @@ void debugLCD() {
 // Update all states for
 
 void updateInputs() {
+  // Get ADC of POT
+  potValue = analogRead(POT);
+
   // update reedSwitches
   reedForward.updateState();
   reedBackward.updateState();
