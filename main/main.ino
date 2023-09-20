@@ -125,13 +125,12 @@ void loop() {
 void debugLCD() {
   if (reedForward.isRisingEdge()) {
 
-    lcd.setCursor(0, 0);
-    lcd.print("+");
-    lcd.print(reedForward.isRisingEdge());
+    lcd.setCursor(9, 1);
+    lcd.print("+");    
 
   } else if (reedForward.isFallingEdge()) {
 
-    lcd.setCursor(0, 0);
+    lcd.setCursor(9, 1);
     lcd.print("-");
   }
 
