@@ -72,7 +72,7 @@ void ControlFan();
 
 
 // Application Specfic
-uint8_t neoColorScene = 0;  // 0: , 1: , 2: , 3:
+uint8_t neoColorScene = 0;  // 0: Purple, 1: Pink , 2: Blue , 3: Red
 uint8_t fadeCounter = 0;
 uint8_t fadeSpeed = 2;
 bool fadeDirUp = 1;
@@ -229,22 +229,22 @@ void MotionDetect() {
 void ReedSwitches() {
 
   if (reedForward.isRisingEdge()) {
-
+    neoColorScene = 0;
   } else if (reedForward.isFallingEdge()) {
   }
 
   if (reedBackward.isRisingEdge()) {
-
+    neoColorScene = 1;
   } else if (reedBackward.isFallingEdge()) {
   }
 
   if (reedLeft.isRisingEdge()) {
-
+    neoColorScene = 2;
   } else if (reedLeft.isFallingEdge()) {
   }
 
   if (reedRight.isRisingEdge()) {
-
+    neoColorScene = 3;
   } else if (reedRight.isFallingEdge()) {
   }
 }
@@ -293,21 +293,57 @@ void NeoPixelRun() {
 
 
   NeoPixel.clear();
+  float red = 0;
+  float green = 0;
+  float blue = 0;
+
+  //Scene Selector
+  switch (neoColorScene) {
+    case 0:
+      //Purple
+      red = 0.667;
+      green = 0;
+      blue = 1;
+      break;
+
+    case 1:
+      //Pink
+      red = 1;
+      green = 0;
+      blue = 0.667;
+      break;
+
+
+    case 2:
+      // Blue
+      red = 0;
+      green = 0.334;
+      blue = 0.667;
+      break;
+
+    case 3:
+      //Red
+      red = 1;
+      green = 0.02;
+      blue = 0.01;
+      break;
+  }
+
   for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
 
-    int lightLevelR = fadeCounter / 1.5;
-    int lightLevelG = fadeCounter * 0;
-    int lightLevelB = fadeCounter;
+    int lightLevelR = fadeCounter * red;
+    int lightLevelG = fadeCounter * green;
+    int lightLevelB = fadeCounter * blue;
 
     // Random White Sparkle when fan is fast
-    
+
     if (fanVolume >= 180 && fanVolume < 225) {
       if (random(1, 40) == 1) {
         lightLevelR = 255;
         lightLevelG = 255;
         lightLevelB = 255;
-      }    
-    }else if (fanVolume >= 225) {
+      }
+    } else if (fanVolume >= 225) {
       if (random(1, 10) == 1) {
         lightLevelR = 255;
         lightLevelG = 255;
