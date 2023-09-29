@@ -42,10 +42,25 @@ LCD SCREEN
 #include <avr/power.h>  // Required for 16 MHz Adafruit Trinket
 #include "ReadDebounce.h"
 
+// Inputs
+#define POT A0           // Base Potentiometer
+#define IR_PIN 8         // IR Wave Detection Pin
+#define REED_FORWARD 16  // Push Forwards
+#define REED_BACKWARD 17
+#define REED_LEFT 18
+#define REED_RIGHT 19
 
-#define PIN_NEO_PIXEL 7     // Arduino pin that connects to NeoPixel
-#define NUM_PIXELS 24       // The number of LEDs (pixels) on NeoPixel
-#define DELAY_INTERVAL 250  // 250ms pause between each pixel
+// OutPuts
+#define FAN 6            // PWM Fan
+#define PIN_NEO_PIXEL 7  // Arduino pin that connects to NeoPixel
+
+// Neo Pixel
+#define NUM_PIXELS 24  // The number of LEDs (pixels) on NeoPixel
+
+// Appplication Specific
+#define DEV_MODE 1        // Dev Mode On / Off
+#define DIVIDER_AMOUNT 8  // Amount of times to skip before ramping down fan
+#define FAN_INC 25        // Fan Incement amount on wave
 
 // functions
 void ReedSwitches();
@@ -55,25 +70,18 @@ void initLCD();
 void updateInputs();
 void ControlFan();
 
-// Inputs
-const uint8_t POT = A0;
-const uint8_t IR_PIN = 8;
-const uint8_t REED_FORWARD = 16;
-const uint8_t REED_BACKWARD = 17;
-const uint8_t REED_LEFT = 18;
-const uint8_t REED_RIGHT = 19;
-
-// Outputs
-const uint8_t FAN = 6;
 
 // Application Specfic
-const bool DEV_MODE = 1;
-const uint8_t FAN_INC = 25;
-const uint8_t DIVIDER_AMOUNT = 8;  // Amount of times to skip before ramping down fan
+uint8_t neoColorScene = 0;  // 0: , 1: , 2: , 3:
+uint8_t fadeCounter = 0;
+uint8_t fadeSpeed = 2;
+bool fadeDirUp = 1;
+
 uint8_t waveCnt = 0;
 uint8_t fanVolume = 0;
 uint16_t divider = 0;  // For Fan ramp down
 uint8_t potValue = 0;
+
 uint8_t pixel = 0;
 
 
@@ -259,17 +267,132 @@ void ControlFan() {
 void NeoPixelRun() {
   NeoPixel.clear();  // set all pixel colors to 'off'. It only takes effect if pixels.show() is called
 
-  // turn pixels to green one by one with delay between each pixel
-  // for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {           // for each pixel
-  
-  if (pixel % NUM_PIXELS != 0) {
-    NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume/8, fanVolume/8, fanVolume));  // it only takes effect if pixels.show() is called
-    NeoPixel.show();                                       // send the updated pixel colors to the NeoPixel hardware.
+  // Set pulse speed.
+  if (fanVolume >= 80) {
+    fadeSpeed = 1;
   } else {
-    pixel = 0;
-    NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume/8, fanVolume/8, fanVolume));  // it only takes effect if pixels.show() is called
-    NeoPixel.show();          
+    fadeSpeed = 2;
   }
-  pixel++;
-  // }
+
+  // Set direction of fase
+  if (fadeCounter >= 150)
+    fadeDirUp = 0;
+  else if (fadeCounter <= 30)
+    fadeDirUp = 1;
+
+  //Set pulse rate of fade
+  if (fadeDirUp && divider % fadeSpeed == 0) {
+    fadeCounter++;
+    if (fanVolume > 140)
+      fadeCounter++;
+  } else if (divider % fadeSpeed == 0) {
+    fadeCounter--;
+    if (fanVolume > 140)
+      fadeCounter--;
+  }
+
+
+  NeoPixel.clear();
+  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
+
+    int lightLevelR = fadeCounter / 1.5;
+    int lightLevelG = fadeCounter * 0;
+    int lightLevelB = fadeCounter;
+
+    // Random White Sparkle when fan is fast
+    
+    if (fanVolume >= 180 && fanVolume < 225) {
+      if (random(1, 40) == 1) {
+        lightLevelR = 255;
+        lightLevelG = 255;
+        lightLevelB = 255;
+      }    
+    }else if (fanVolume >= 225) {
+      if (random(1, 10) == 1) {
+        lightLevelR = 255;
+        lightLevelG = 255;
+        lightLevelB = 255;
+      }
+    }
+
+    NeoPixel.setPixelColor(pixels, NeoPixel.Color(lightLevelR, lightLevelG, lightLevelB));  // it only takes effect if pixels.show() is called
+  }
+  NeoPixel.show();
+
+
+
+  // switch (fadeCounter) {
+  //   case 0:
+  //     neo0per();
+  //     break;
+
+  //   case 45:
+  //     neo25per();
+  //     break;
+
+  //   case 125:
+  //     neo50per();
+  //     break;
+
+  //   case 180:
+  //     neo75per();
+  //     break;
+
+  //   case 250:
+  //     neo100per();
+  //     break;
+}
+
+
+
+// if (pixel % NUM_PIXELS != 0) {
+//   NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume / 8, fanVolume / 8, fanVolume));  // it only takes effect if pixels.show() is called
+//   NeoPixel.show();                                                                         // send the updated pixel colors to the NeoPixel hardware.
+// } else {
+//   pixel = 0;
+//   NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume / 8, fanVolume / 8, fanVolume));  // it only takes effect if pixels.show() is called
+//   NeoPixel.show();
+// }
+// pixel++;
+// }
+// }
+
+void neo0per() {
+  NeoPixel.clear();
+  NeoPixel.show();
+}
+
+
+void neo25per() {
+  NeoPixel.clear();
+  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
+    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 4, 0, 200 / 4));  // it only takes effect if pixels.show() is called
+  }
+  NeoPixel.show();
+}
+
+void neo50per() {
+  NeoPixel.clear();
+  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
+    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 3, 0, 200 / 3));  // it only takes effect if pixels.show() is called
+  }
+  NeoPixel.show();
+}
+
+
+void neo75per() {
+  NeoPixel.clear();
+  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
+    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 2, 0, 200 / 2));  // it only takes effect if pixels.show() is called
+  }
+  NeoPixel.show();
+}
+
+
+void neo100per() {
+  NeoPixel.clear();
+  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
+    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 1, 0, 200 / 1));  // it only takes effect if pixels.show() is called
+  }
+  NeoPixel.show();
 }
