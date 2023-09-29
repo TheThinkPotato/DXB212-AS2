@@ -56,6 +56,8 @@ LCD SCREEN
 
 // Neo Pixel
 #define NUM_PIXELS 24  // The number of LEDs (pixels) on NeoPixel
+#define FADE_MAX 150   // Max Fade Range on NeoPixel
+#define FADE_MIN 20    // Min fade range on NeoPixel
 
 // Appplication Specific
 #define DEV_MODE 1        // Dev Mode On / Off
@@ -274,9 +276,9 @@ void pulseNeoPixel() {
   }
 
   // Set direction of fase
-  if (fadeCounter >= 150)
+  if (fadeCounter >= FADE_MAX)
     fadeDirUp = 0;
-  else if (fadeCounter <= 30)
+  else if (fadeCounter <= FADE_MIN)
     fadeDirUp = 1;
 
   //Set pulse rate of fade
@@ -298,7 +300,7 @@ void NeoPixelRun() {
   NeoPixelScene();
 }
 
-
+// Select Scene for NeoPixel
 void NeoPixelScene() {
   float red = 0;
   float green = 0;
@@ -338,22 +340,24 @@ void NeoPixelScene() {
   // Send to NeoPixel
   for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
 
-    int lightLevelR = fadeCounter * red;
-    int lightLevelG = fadeCounter * green;
-    int lightLevelB = fadeCounter * blue;
+    int lightLevelR = (fadeCounter * red);
+    int lightLevelG = (fadeCounter * green);
+    int lightLevelB = (fadeCounter * blue);
 
-    // Random White Sparkle when fan is fast    
+    int* magicColor = neoPixelMagicColor();     //Set Magic Color
+
+    // Random White Sparkle when fan is fast
     if (fanVolume >= 180 && fanVolume < 225) {
       if (random(1, 40) == 1) {
-        lightLevelR = 255;
-        lightLevelG = 255;
-        lightLevelB = 255;
+        lightLevelR = magicColor[0];
+        lightLevelG = magicColor[1];
+        lightLevelB = magicColor[2];
       }
     } else if (fanVolume >= 225) {
       if (random(1, 10) == 1) {
-        lightLevelR = 255;
-        lightLevelG = 255;
-        lightLevelB = 255;
+        lightLevelR = magicColor[0];
+        lightLevelG = magicColor[1];
+        lightLevelB = magicColor[2];
       }
     }
 
@@ -361,3 +365,48 @@ void NeoPixelScene() {
   }
   NeoPixel.show();
 }
+
+// Set magic color
+int* neoPixelMagicColor() {
+  static int array[3];
+
+    switch (potValue) {
+    case 1 ... 51:
+      // Magenta
+      array[0] = 0xFF;
+      array[1] = 0x00;
+      array[2] = 0x7F;
+      return array;
+      break;
+
+    case 52 ... 102:
+      //Yellow
+      array[0] = 0xFF;
+      array[1] = 0xF0;
+      array[2] = 0x00;
+      return array;
+      break;
+
+    case 103 ... 153:
+      //Green
+      array[0] = 0x66;
+      array[1] = 0xFF;
+      array[2] = 0x00;
+      return array;
+      break;
+
+    case 154 ... 204:
+      //Cyan
+      array[0] = 0x08;
+      array[1] = 0xE8;
+      array[2] = 0xDE;
+      return array;
+      break;
+
+    case 205 ... 255:
+      //White
+      static int array[3] = { 0xFF, 0xFF, 0xFF };
+      return array;
+      break;
+      }
+  }
