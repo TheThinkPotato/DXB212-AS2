@@ -1,5 +1,5 @@
 /*
-Interactive SNOW Globe code by Daniel Lopez, LCD code based of the Liquad Crystal Examples.
+Interactive Magic Crystal Ball code by Daniel Lopez, LCD code based of the Liquad Crystal Examples.
 The firmware has been designed for the tangible media unit DXB212 for Queensland University of Technology.
 
 IR Wave Detection
@@ -32,17 +32,20 @@ LCD SCREEN
  * LCD R/W pin to ground
  * LCD VSS pin to ground
  * LCD VCC pin to 5V
- * 10K resistor:
- * ends to +5V and ground
- * wiper to LCD VO pin (pin 3)
-
+ * 3k ohm resistor to LCD VO pin (pin 3) and ground
 */
 
 // include the library code:
 #include <LiquidCrystal.h>
 #include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
+#include <avr/power.h>  // Required for 16 MHz Adafruit Trinket
 #include "ReadDebounce.h"
 
+
+#define PIN_NEO_PIXEL 7     // Arduino pin that connects to NeoPixel
+#define NUM_PIXELS 24       // The number of LEDs (pixels) on NeoPixel
+#define DELAY_INTERVAL 250  // 250ms pause between each pixel
 
 // functions
 void ReedSwitches();
@@ -71,6 +74,7 @@ uint8_t waveCnt = 0;
 uint8_t fanVolume = 0;
 uint16_t divider = 0;  // For Fan ramp down
 uint8_t potValue = 0;
+uint8_t pixel = 0;
 
 
 // initialize the library by associating any needed LCD interface pin
@@ -78,17 +82,18 @@ uint8_t potValue = 0;
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-
 ReadDebounce motionIR(IR_PIN);
 ReadDebounce reedForward(REED_FORWARD);
 ReadDebounce reedBackward(REED_BACKWARD);
 ReadDebounce reedLeft(REED_LEFT);
 ReadDebounce reedRight(REED_RIGHT);
 
-
+Adafruit_NeoPixel NeoPixel(NUM_PIXELS, PIN_NEO_PIXEL, NEO_GRB + NEO_KHZ800);
 //=================================================================
 // Setup
 void setup() {
+
+  NeoPixel.begin();  // INITIALIZE NeoPixel strip object (REQUIRED)
 
   //Setup debug LCD if in devMode
   if (DEV_MODE) {
@@ -103,7 +108,7 @@ void setup() {
   // Inputs
   // IR Detection Pin
   pinMode(IR_PIN, INPUT);
-  
+
   // Reed Switches
   pinMode(REED_FORWARD, INPUT_PULLUP);
   pinMode(REED_BACKWARD, INPUT_PULLUP);
@@ -125,6 +130,7 @@ void loop() {
   MotionDetect();
   ControlFan();
   debugLCD();
+  NeoPixelRun();
 }
 
 //=================================================================
@@ -134,9 +140,9 @@ void debugLCD() {
   if (reedForward.isRisingEdge()) {
 
     lcd.setCursor(9, 1);
-    lcd.print("+");    
+    lcd.print("+");
 
-// Display - for falling edge for reed switch
+    // Display - for falling edge for reed switch
   } else if (reedForward.isFallingEdge()) {
 
     lcd.setCursor(9, 1);
@@ -149,7 +155,7 @@ void debugLCD() {
     lcd.setCursor(15, 0);
     lcd.print("R");
 
-  // Display falling edge as F
+    // Display falling edge as F
   } else if (motionIR.isFallingEdge()) {
     lcd.setCursor(15, 0);
     lcd.print("F");
@@ -194,7 +200,7 @@ void updateInputs() {
 // Motion Detection
 // Get motion detect and trigger actions
 void MotionDetect() {
-  
+
   //Rising Edge  __|^^
   if (motionIR.isRisingEdge()) {
   }
@@ -217,28 +223,23 @@ void ReedSwitches() {
   if (reedForward.isRisingEdge()) {
 
   } else if (reedForward.isFallingEdge()) {
-  
   }
 
   if (reedBackward.isRisingEdge()) {
 
   } else if (reedBackward.isFallingEdge()) {
-  
   }
 
   if (reedLeft.isRisingEdge()) {
 
   } else if (reedLeft.isFallingEdge()) {
-  
   }
 
-    if (reedRight.isRisingEdge()) {
+  if (reedRight.isRisingEdge()) {
 
   } else if (reedRight.isFallingEdge()) {
-  
   }
-
-} 
+}
 
 
 //=================================================================
@@ -250,4 +251,25 @@ void ControlFan() {
   //Fan volume is not off with divider
   if (fanVolume != 0 && divider % DIVIDER_AMOUNT == 0)
     analogWrite(FAN, fanVolume--);
+}
+
+
+//=================================================================
+// Neo Pixel
+void NeoPixelRun() {
+  NeoPixel.clear();  // set all pixel colors to 'off'. It only takes effect if pixels.show() is called
+
+  // turn pixels to green one by one with delay between each pixel
+  // for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {           // for each pixel
+  
+  if (pixel % NUM_PIXELS != 0) {
+    NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume/8, fanVolume/8, fanVolume));  // it only takes effect if pixels.show() is called
+    NeoPixel.show();                                       // send the updated pixel colors to the NeoPixel hardware.
+  } else {
+    pixel = 0;
+    NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume/8, fanVolume/8, fanVolume));  // it only takes effect if pixels.show() is called
+    NeoPixel.show();          
+  }
+  pixel++;
+  // }
 }
