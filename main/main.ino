@@ -229,22 +229,22 @@ void MotionDetect() {
 void ReedSwitches() {
 
   if (reedForward.isRisingEdge()) {
-    neoColorScene = 0;
+    neoColorScene = 3;
   } else if (reedForward.isFallingEdge()) {
   }
 
   if (reedBackward.isRisingEdge()) {
-    neoColorScene = 1;
+    neoColorScene = 2;
   } else if (reedBackward.isFallingEdge()) {
   }
 
   if (reedLeft.isRisingEdge()) {
-    neoColorScene = 2;
+    neoColorScene = 1;
   } else if (reedLeft.isFallingEdge()) {
   }
 
   if (reedRight.isRisingEdge()) {
-    neoColorScene = 3;
+    neoColorScene = 0;
   } else if (reedRight.isFallingEdge()) {
   }
 }
@@ -264,8 +264,7 @@ void ControlFan() {
 
 //=================================================================
 // Neo Pixel
-void NeoPixelRun() {
-  NeoPixel.clear();  // set all pixel colors to 'off'. It only takes effect if pixels.show() is called
+void pulseNeoPixel() {
 
   // Set pulse speed.
   if (fanVolume >= 80) {
@@ -290,9 +289,17 @@ void NeoPixelRun() {
     if (fanVolume > 140)
       fadeCounter--;
   }
+}
 
-
+// NeoPixel Main Routine
+void NeoPixelRun() {
   NeoPixel.clear();
+  pulseNeoPixel();
+  NeoPixelScene();
+}
+
+
+void NeoPixelScene() {
   float red = 0;
   float green = 0;
   float blue = 0;
@@ -313,7 +320,6 @@ void NeoPixelRun() {
       blue = 0.667;
       break;
 
-
     case 2:
       // Blue
       red = 0;
@@ -329,14 +335,14 @@ void NeoPixelRun() {
       break;
   }
 
+  // Send to NeoPixel
   for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
 
     int lightLevelR = fadeCounter * red;
     int lightLevelG = fadeCounter * green;
     int lightLevelB = fadeCounter * blue;
 
-    // Random White Sparkle when fan is fast
-
+    // Random White Sparkle when fan is fast    
     if (fanVolume >= 180 && fanVolume < 225) {
       if (random(1, 40) == 1) {
         lightLevelR = 255;
@@ -352,83 +358,6 @@ void NeoPixelRun() {
     }
 
     NeoPixel.setPixelColor(pixels, NeoPixel.Color(lightLevelR, lightLevelG, lightLevelB));  // it only takes effect if pixels.show() is called
-  }
-  NeoPixel.show();
-
-
-
-  // switch (fadeCounter) {
-  //   case 0:
-  //     neo0per();
-  //     break;
-
-  //   case 45:
-  //     neo25per();
-  //     break;
-
-  //   case 125:
-  //     neo50per();
-  //     break;
-
-  //   case 180:
-  //     neo75per();
-  //     break;
-
-  //   case 250:
-  //     neo100per();
-  //     break;
-}
-
-
-
-// if (pixel % NUM_PIXELS != 0) {
-//   NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume / 8, fanVolume / 8, fanVolume));  // it only takes effect if pixels.show() is called
-//   NeoPixel.show();                                                                         // send the updated pixel colors to the NeoPixel hardware.
-// } else {
-//   pixel = 0;
-//   NeoPixel.setPixelColor(pixel, NeoPixel.Color(fanVolume / 8, fanVolume / 8, fanVolume));  // it only takes effect if pixels.show() is called
-//   NeoPixel.show();
-// }
-// pixel++;
-// }
-// }
-
-void neo0per() {
-  NeoPixel.clear();
-  NeoPixel.show();
-}
-
-
-void neo25per() {
-  NeoPixel.clear();
-  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
-    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 4, 0, 200 / 4));  // it only takes effect if pixels.show() is called
-  }
-  NeoPixel.show();
-}
-
-void neo50per() {
-  NeoPixel.clear();
-  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
-    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 3, 0, 200 / 3));  // it only takes effect if pixels.show() is called
-  }
-  NeoPixel.show();
-}
-
-
-void neo75per() {
-  NeoPixel.clear();
-  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
-    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 2, 0, 200 / 2));  // it only takes effect if pixels.show() is called
-  }
-  NeoPixel.show();
-}
-
-
-void neo100per() {
-  NeoPixel.clear();
-  for (int pixels = 0; pixels < NUM_PIXELS; pixels++) {
-    NeoPixel.setPixelColor(pixels, NeoPixel.Color(150 / 1, 0, 200 / 1));  // it only takes effect if pixels.show() is called
   }
   NeoPixel.show();
 }
