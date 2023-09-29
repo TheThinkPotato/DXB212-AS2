@@ -344,10 +344,16 @@ void NeoPixelScene() {
     int lightLevelG = (fadeCounter * green);
     int lightLevelB = (fadeCounter * blue);
 
-    int* magicColor = neoPixelMagicColor();     //Set Magic Color
+    int* magicColor = neoPixelMagicColor();  //Set Magic Color
 
     // Random White Sparkle when fan is fast
-    if (fanVolume >= 180 && fanVolume < 225) {
+    if (fanVolume >= 140 && fanVolume < 180) {
+      if (random(1, 100) == 1) {
+        lightLevelR = magicColor[0];
+        lightLevelG = magicColor[1];
+        lightLevelB = magicColor[2];
+      }
+    } else if (fanVolume >= 180 && fanVolume < 225) {
       if (random(1, 40) == 1) {
         lightLevelR = magicColor[0];
         lightLevelG = magicColor[1];
@@ -370,7 +376,7 @@ void NeoPixelScene() {
 int* neoPixelMagicColor() {
   static int array[3];
 
-    switch (potValue) {
+  switch (potValue) {
     case 1 ... 51:
       // Magenta
       array[0] = 0xFF;
@@ -408,5 +414,5 @@ int* neoPixelMagicColor() {
       static int array[3] = { 0xFF, 0xFF, 0xFF };
       return array;
       break;
-      }
   }
+}
