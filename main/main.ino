@@ -43,8 +43,8 @@ LCD SCREEN
 #include "ReadDebounce.h"
 
 // Inputs
-#define POT A0           // Base Potentiometer
-#define IR_PIN 8         // IR Wave Detection Pin
+#define POT A0    // Base Potentiometer
+#define IR_PIN 8  // IR Wave Detection Pin
 
 // OutPuts
 #define FAN 6            // PWM Fan
@@ -118,7 +118,7 @@ void setup() {
 // Main Loop
 void loop() {
 
-  updateInputs();  
+  updateInputs();
   MotionDetect();
   ControlFan();
   debugLCD();
@@ -245,7 +245,7 @@ void NeoPixelScene() {
 
   //Scene Selector - Done from Pot
   switch (potValue) {
-    case 0:
+    case 0 ... 10:
       // Magic Only Mode
       neoColorScene = 0;
       red = 0;
@@ -253,7 +253,7 @@ void NeoPixelScene() {
       blue = 0;
       break;
 
-    case 1 ... 75:
+    case 11 ... 75:
       //Purple - Storm
       neoColorScene = 1;
       red = 0.667;
@@ -261,7 +261,7 @@ void NeoPixelScene() {
       blue = 1;
       break;
 
-    case 76 ... 153 :
+    case 76 ... 153:
       // Blue - Water
       neoColorScene = 2;
       red = 0;
@@ -277,7 +277,7 @@ void NeoPixelScene() {
       blue = 0.01;
       break;
 
-      case 233 ... 255 :
+    case 233 ... 255:
       //Green - Life
       neoColorScene = 4;
       red = 0.03;
@@ -322,15 +322,41 @@ void NeoPixelScene() {
 }
 
 // Set magic color
-int* neoPixelMagicColor() {  
-  static int array[3] = { 0xFF, 0xFF, 0xFF };   
+int* neoPixelMagicColor() {
+  static int array[3] = { 0xFF, 0xFF, 0xFF };
   //If fire set sparkles yellow
-  if (neoColorScene == 3)
-  {
-    array[0] = 0xF7;
-    array[1] = 0xA5;
-    array[2] = 0x00;
+  switch (neoColorScene) {
+    case 0: // Magic sparkles - random
+      array[0] = random(0,255);
+      array[1] = random(0,255);
+      array[2] = random(0,255);
+      break;
+
+    case 1: //Storm - purple
+      array[0] = 0xFF;
+      array[1] = 0xFF;
+      array[2] = 0xFF;
+      break;
+
+    case 2: //Water - blue
+      array[0] = 0xFF;
+      array[1] = 0xFF;
+      array[2] = 0xFF;
+      break;
+
+    case 3: //Fire - red
+      array[0] = 0xF7;
+      array[1] = 0xA5;
+      array[2] = 0x00;
+      break;
+
+    case 4: //Life - green
+      array[0] = 0xFF;
+      array[1] = 0xFF;
+      array[2] = 0xFF;
+      break;
   }
+
+
   return array;
 }
-
