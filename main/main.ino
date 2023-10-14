@@ -45,10 +45,6 @@ LCD SCREEN
 // Inputs
 #define POT A0           // Base Potentiometer
 #define IR_PIN 8         // IR Wave Detection Pin
-#define REED_FORWARD 16  // Push Forwards
-#define REED_BACKWARD 17
-#define REED_LEFT 18
-#define REED_RIGHT 19
 
 // OutPuts
 #define FAN 6            // PWM Fan
@@ -65,7 +61,6 @@ LCD SCREEN
 #define FAN_INC 25        // Fan Incement amount on wave
 
 // functions
-void ReedSwitches();
 void MotionDetect();
 void debugLCD();
 void initLCD();
@@ -74,7 +69,7 @@ void ControlFan();
 
 
 // Application Specfic
-uint8_t neoColorScene = 0;  // 0: Purple, 1: Pink , 2: Blue , 3: Red
+uint8_t neoColorScene = 0;  // 0: Magic Sparkles 1: Purple - Storm, 2: Blue - Water , 3: Red - Fire , 3: Green - Life
 uint8_t fadeCounter = 0;
 uint8_t fadeSpeed = 2;
 bool fadeDirUp = 1;
@@ -93,10 +88,6 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 ReadDebounce motionIR(IR_PIN);
-ReadDebounce reedForward(REED_FORWARD);
-ReadDebounce reedBackward(REED_BACKWARD);
-ReadDebounce reedLeft(REED_LEFT);
-ReadDebounce reedRight(REED_RIGHT);
 
 Adafruit_NeoPixel NeoPixel(NUM_PIXELS, PIN_NEO_PIXEL, NEO_GRB + NEO_KHZ800);
 //=================================================================
@@ -119,24 +110,15 @@ void setup() {
   // IR Detection Pin
   pinMode(IR_PIN, INPUT);
 
-  // Reed Switches
-  pinMode(REED_FORWARD, INPUT_PULLUP);
-  pinMode(REED_BACKWARD, INPUT_PULLUP);
-  pinMode(REED_LEFT, INPUT_PULLUP);
-  pinMode(REED_RIGHT, INPUT_PULLUP);
-
-
 
   // Outputs
   pinMode(FAN, OUTPUT);
 }
-
 //=================================================================
 // Main Loop
 void loop() {
 
-  updateInputs();
-  ReedSwitches();
+  updateInputs();  
   MotionDetect();
   ControlFan();
   debugLCD();
@@ -146,18 +128,6 @@ void loop() {
 //=================================================================
 // Debug LCD
 void debugLCD() {
-  // Display + for rising edge for reed switch
-  if (reedForward.isRisingEdge()) {
-
-    lcd.setCursor(9, 1);
-    lcd.print("+");
-
-    // Display - for falling edge for reed switch
-  } else if (reedForward.isFallingEdge()) {
-
-    lcd.setCursor(9, 1);
-    lcd.print("-");
-  }
 
   //Rising Edge  __|^^
   // Display rising edge as R
@@ -195,12 +165,6 @@ void updateInputs() {
   // Get ADC of POT
   potValue = analogRead(POT);
 
-  // update reedSwitches
-  reedForward.updateState();
-  reedBackward.updateState();
-  reedLeft.updateState();
-  reedRight.updateState();
-
   // read motion input status
   motionIR.updateState();
 }
@@ -221,33 +185,6 @@ void MotionDetect() {
     // Increase PWM Duty cycle if not of 100%
     if (fanVolume < (255 - FAN_INC))
       fanVolume += FAN_INC;
-  }
-}
-
-
-//=================================================================
-// Reed Switches
-// Get reed switches and trigger actions
-void ReedSwitches() {
-
-  if (reedForward.isRisingEdge()) {
-    neoColorScene = 3;
-  } else if (reedForward.isFallingEdge()) {
-  }
-
-  if (reedBackward.isRisingEdge()) {
-    neoColorScene = 2;
-  } else if (reedBackward.isFallingEdge()) {
-  }
-
-  if (reedLeft.isRisingEdge()) {
-    neoColorScene = 1;
-  } else if (reedLeft.isFallingEdge()) {
-  }
-
-  if (reedRight.isRisingEdge()) {
-    neoColorScene = 0;
-  } else if (reedRight.isFallingEdge()) {
   }
 }
 
@@ -306,34 +243,46 @@ void NeoPixelScene() {
   float green = 0;
   float blue = 0;
 
-  //Scene Selector
-  switch (neoColorScene) {
+  //Scene Selector - Done from Pot
+  switch (potValue) {
     case 0:
-      //Purple
+      // Magic Only Mode
+      neoColorScene = 0;
+      red = 0;
+      green = 0;
+      blue = 0;
+      break;
+
+    case 1 ... 75:
+      //Purple - Storm
+      neoColorScene = 1;
       red = 0.667;
       green = 0;
       blue = 1;
       break;
 
-    case 1:
-      //Pink
-      red = 1;
-      green = 0;
-      blue = 0.667;
-      break;
-
-    case 2:
-      // Blue
+    case 76 ... 153 :
+      // Blue - Water
+      neoColorScene = 2;
       red = 0;
       green = 0.334;
       blue = 0.667;
       break;
 
-    case 3:
-      //Red
+    case 154 ... 232:
+      //Red - Fire
+      neoColorScene = 3;
       red = 1;
       green = 0.02;
       blue = 0.01;
+      break;
+
+      case 233 ... 255 :
+      //Green - Life
+      neoColorScene = 4;
+      red = 0.03;
+      green = 0.65;
+      blue = 0.00;
       break;
   }
 
@@ -373,46 +322,15 @@ void NeoPixelScene() {
 }
 
 // Set magic color
-int* neoPixelMagicColor() {
-  static int array[3];
-
-  switch (potValue) {
-    case 1 ... 51:
-      // Magenta
-      array[0] = 0xFF;
-      array[1] = 0x00;
-      array[2] = 0x7F;
-      return array;
-      break;
-
-    case 52 ... 102:
-      //Yellow
-      array[0] = 0xFF;
-      array[1] = 0xF0;
-      array[2] = 0x00;
-      return array;
-      break;
-
-    case 103 ... 153:
-      //Green
-      array[0] = 0x66;
-      array[1] = 0xFF;
-      array[2] = 0x00;
-      return array;
-      break;
-
-    case 154 ... 204:
-      //Cyan
-      array[0] = 0x08;
-      array[1] = 0xE8;
-      array[2] = 0xDE;
-      return array;
-      break;
-
-    case 205 ... 255:
-      //White
-      static int array[3] = { 0xFF, 0xFF, 0xFF };
-      return array;
-      break;
+int* neoPixelMagicColor() {  
+  static int array[3] = { 0xFF, 0xFF, 0xFF };   
+  //If fire set sparkles yellow
+  if (neoColorScene == 3)
+  {
+    array[0] = 0xF7;
+    array[1] = 0xA5;
+    array[2] = 0x00;
   }
+  return array;
 }
+
