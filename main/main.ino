@@ -77,7 +77,7 @@ bool fadeDirUp = 1;
 uint8_t waveCnt = 0;
 uint8_t fanVolume = 0;
 uint16_t divider = 0;  // For Fan ramp down
-uint8_t potValue = 0;
+uint16_t potValue = 0;
 
 uint8_t pixel = 0;
 
@@ -195,6 +195,13 @@ void ControlFan() {
   // Decay divider to slow the time fan to turn off
   divider++;
 
+  // if in off mode turn fan off
+  if (neoColorScene == 0)
+  {
+    fanVolume = 0;
+    analogWrite(FAN, fanVolume);
+  }
+
   //Fan volume is not off with divider
   if (fanVolume != 0 && divider % DIVIDER_AMOUNT == 0)
     analogWrite(FAN, fanVolume--);
@@ -245,15 +252,15 @@ void NeoPixelScene() {
 
   //Scene Selector - Done from Pot
   switch (potValue) {
-    case 0 ... 10:
-      // Magic Only Mode
+    case 0 ... 203:
+      // Off
       neoColorScene = 0;
       red = 0;
       green = 0;
       blue = 0;
       break;
 
-    case 11 ... 75:
+    case 204 ... 409:
       //Purple - Storm
       neoColorScene = 1;
       red = 0.667;
@@ -261,7 +268,7 @@ void NeoPixelScene() {
       blue = 1;
       break;
 
-    case 76 ... 153:
+    case 410 ... 614:
       // Blue - Water
       neoColorScene = 2;
       red = 0;
@@ -269,7 +276,7 @@ void NeoPixelScene() {
       blue = 0.667;
       break;
 
-    case 154 ... 232:
+    case 615 ... 819:
       //Red - Fire
       neoColorScene = 3;
       red = 1;
@@ -277,7 +284,7 @@ void NeoPixelScene() {
       blue = 0.01;
       break;
 
-    case 233 ... 255:
+    case 820 ... 1023:
       //Green - Life
       neoColorScene = 4;
       red = 0.03;
@@ -326,31 +333,31 @@ int* neoPixelMagicColor() {
   static int array[3] = { 0xFF, 0xFF, 0xFF };
   //If fire set sparkles yellow
   switch (neoColorScene) {
-    case 0: // Magic sparkles - random
-      array[0] = random(0,255);
-      array[1] = random(0,255);
-      array[2] = random(0,255);
+    case 0:  // Off
+      array[0] = 0;
+      array[1] = 0;
+      array[2] = 0;
       break;
 
-    case 1: //Storm - purple
+    case 1:  //Storm - purple
       array[0] = 0xFF;
       array[1] = 0xFF;
       array[2] = 0xFF;
       break;
 
-    case 2: //Water - blue
+    case 2:  //Water - blue
       array[0] = 0xFF;
       array[1] = 0xFF;
       array[2] = 0xFF;
       break;
 
-    case 3: //Fire - red
+    case 3:  //Fire - red
       array[0] = 0xF7;
       array[1] = 0xA5;
       array[2] = 0x00;
       break;
 
-    case 4: //Life - green
+    case 4:  //Life - green
       array[0] = 0xFF;
       array[1] = 0xFF;
       array[2] = 0xFF;
